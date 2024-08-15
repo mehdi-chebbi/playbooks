@@ -1,0 +1,27 @@
+---
+- name: Install Prometheus and Grafana on cluster 2pt
+  hosts: localhost
+  tasks:
+    - name: Deploy the Prometheus operator
+      ansible.builtin.shell: kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/bundle.yaml --force-conflicts=true --server-side=true
+
+    - name: Install RBAC controller on Prometheus
+      ansible.builtin.shell: kubectl apply -f prometheus_rbac.yaml
+
+    - name: Install Prometheus Instance
+      ansible.builtin.shell: kubectl apply -f prometheus_instance.yaml
+
+    - name: Expose Service Monitor
+      ansible.builtin.shell: kubectl apply -f service_monitor.yaml
+
+    - name: Deploy Grafana in the cluster
+      ansible.builtin.shell: kubectl create deployment grafana --image=docker.io/grafana/grafana:latest 
+
+    - name: Expose Prometheus
+      ansible.builtin.shell: kubectl apply -f expose_prometheus.yaml
+
+    - name: Expose The port 3000
+      ansible.builtin.shell: kubectl expose deployment grafana --port 3000
+
+    - name: Forward the service
+      ansible.builtin.shell: kubectl port-forward svc/grafana 3000:3000 --address 0.0.0.0 &
